@@ -1,13 +1,11 @@
 const router = require("express").Router();
-const { signUpValidation, loginValidation, specialiteValidation } = require('../helpers/validation');
+
+const { signUpValidation, specialiteValidation } = require('../helpers/validation');
 const professionnelController = require('../controllers/professionnelController');
+var upload = require('../middlewares/uploadImage');
 
-router.get('/all', (req, res) => {
-    res.send("Utilisateurs")
-});
-router.post('/professionnel/register', signUpValidation, specialiteValidation, professionnelController.register);
 
-//router.post('/professionnel/login', loginValidation, professionnelController.login);
+router.post('/professionnel/register', upload.single('image'), signUpValidation, specialiteValidation, professionnelController.register);
 
 
 module.exports = router;

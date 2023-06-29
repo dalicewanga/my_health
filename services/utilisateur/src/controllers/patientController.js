@@ -20,8 +20,15 @@ const register = async (req,res) => {
         });
     }
 
-    const hash = await bcrypt.hash(req.body.mot_de_passe, 10);
-    req.body.mot_de_passe = hash
+    const { mot_de_passe, mot_de_passe_confirme } = req.body;
+    if(mot_de_passe !== mot_de_passe_confirme){
+        return res.status(400).send({
+            msg: "Les deux mots de passe ne correspondent pas"
+        });
+    }else{
+        const hash = await bcrypt.hash(req.body.mot_de_passe, 10);
+        req.body.mot_de_passe = hash
+    }
 
     // const patient = new Patient({
     //     nom: req.body.nom,
@@ -38,9 +45,13 @@ const register = async (req,res) => {
     // });
     try{
         const savedPatient = req?.body && (await Patient.create(req.body));
+        if(req.file){
+            savedPatient.image = req.file.filename;
+            await savedPatient.save();
+        }
         res.status(201).send({ patient: savedPatient });
     } catch (err) {
-        res.status(400).send({ status: "failed", msg: err })
+        res.status(500).send({ status: "failed", msg: err })
     }
 }
 
@@ -48,7 +59,4 @@ const register = async (req,res) => {
 module.exports = {
     register,
     //verifyMail,
-    //getUser,
-    //forgetPassword,
-    //resetPasswordLoad
 }

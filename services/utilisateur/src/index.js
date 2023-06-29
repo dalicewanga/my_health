@@ -1,22 +1,24 @@
 require("dotenv").config();
 const express = require('express');
 const cors = require('cors');
+const bodyParser = require('body-parser');
+
 var databaseConnection = require("./database/connection");
 const { SERVER_PORT, MONGODB_URI } = process.env;
 const userRoute = require("./routes/userRoute")
 const adminRoute = require("./routes/adminRoute")
 const patientRoute = require("./routes/patientRoute")
 const professionnelRoute = require("./routes/professionnelRoute")
-const bodyParser = require('body-parser');
 
 const StartServer = async() => {
     const app = express();
+    app.use(cors());
     app.use(express.json());
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended:true }));
-    app.use(cors());
 
-    app.use('/my_health/utilisateur', userRoute, adminRoute, patientRoute, professionnelRoute)
+    app.use('/my_health/utilisateur', userRoute, adminRoute, patientRoute, professionnelRoute);
+    app.all("*", (req, res) => res.send({ msg: "Cette route n'existe pas" }));
 
     await databaseConnection();
 

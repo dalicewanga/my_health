@@ -1,9 +1,8 @@
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
+
 const Administrateur = require('../database/models/Administrateur')
 const {Utilisateur} = require('../database/models/Utilisateur')
-const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = process.env;
 
 
 const register = async (req,res) => {
@@ -20,23 +19,22 @@ const register = async (req,res) => {
         });
     }
 
-    const hash = await bcrypt.hash(req.body.mot_de_passe, 10);
-    req.body.mot_de_passe = hash
+    const { mot_de_passe, mot_de_passe_confirme } = req.body;
+    if(mot_de_passe !== mot_de_passe_confirme){
+        return res.status(500).send({
+            msg: "Les deux mots de passe ne correspondent pas"
+        });
+    }else{
+        const hash = await bcrypt.hash(req.body.mot_de_passe, 10);
+        req.body.mot_de_passe = hash
+    }
 
-    // const administrateur = new Administrateur({
-    //     nom: req.body.nom,
-    //     prenom: req.body.prenom,
-    //     date_naissance: req.body.date_naissance,
-    //     sexe: req.body.sexe,
-    //     numero: req.body.numero,
-    //     adresse: req.body.adresse,
-    //     adresse_mail: req.body.adresse_mail,
-    //     mot_de_passe: hash,
-    //     image: req.body.image,
-    //     is_admin: req.body.is_admin,
-    // });
     try{
         const savedAdministrateur = req?.body && (await Administrateur.create(req.body));
+        if(req.file){
+            savedAdministrateur.image = req.file.filename;
+            await savedAdministrateur.save();
+        }
         res.status(201).send({ administrateur: savedAdministrateur });
     } catch (err) {
         res.status(400).send({ status: "failed", msg: err })
@@ -47,6 +45,4 @@ const register = async (req,res) => {
 module.exports = {
     register,
     //verifyMail,
-    //forgetPassword,
-    //resetPasswordLoad
 }

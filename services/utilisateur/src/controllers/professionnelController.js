@@ -20,26 +20,25 @@ const register = async (req,res) => {
         });
     }
 
-    const hash = await bcrypt.hash(req.body.mot_de_passe, 10);
+    const { mot_de_passe, mot_de_passe_confirme } = req.body;
+    if(mot_de_passe !== mot_de_passe_confirme){
+        return res.status(400).send({
+            msg: "Les deux mots de passe ne correspondent pas"
+        });
+    }else{
+        const hash = await bcrypt.hash(req.body.mot_de_passe, 10);
+        req.body.mot_de_passe = hash
+    }
 
-    const professionnel = new Professionnel({
-        nom: req.body.nom,
-        prenom: req.body.prenom,
-        date_naissance: req.body.date_naissance,
-        sexe: req.body.sexe,
-        numero: req.body.numero,
-        adresse: req.body.adresse,
-        adresse_mail: req.body.adresse_mail,
-        mot_de_passe: hash,
-        image: req.body.image,
-        is_admin: req.body.is_admin,
-        specialite: req.body.specialite,
-    });
     try{
-        const savedProfessionnel = await professionnel.save();
+        const savedProfessionnel = req?.body && (await Professionnel.create(req.body));
+        if(req.file){
+            savedProfessionnel.image = req.file.filename;
+            await savedProfessionnel.save();
+        }
         res.status(201).send({ professionnel: savedProfessionnel });
     } catch (err) {
-        res.status(400).send({ status: "failed", msg: err })
+        res.status(500).send({ status: "failed", msg: err })
     }
 }
 
@@ -47,7 +46,4 @@ const register = async (req,res) => {
 module.exports = {
     register,
     //verifyMail,
-    //getUser,
-    //forgetPassword,
-    //resetPasswordLoad
 }

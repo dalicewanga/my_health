@@ -1,18 +1,22 @@
-const {Utilisateur} = require('../database/models/Utilisateur')
 const jwt = require('jsonwebtoken');
 
-const authentification = async (req, res) => {
+const {Utilisateur} = require('../database/models/Utilisateur');
+const { JWT_SECRET } = process.env;
+
+const authentification = async (req, res, next) => {
 
     try{
-        const authToken = req.headers.authorization.split(' ')[1];
+        const authToken = req.header('Authorization').replace('Bearer ', '');
         const decode = jwt.verify(authToken, JWT_SECRET);
         const utilisateur = await Utilisateur.findOne({ _id: decode._id, auth_token: authToken });
-        if(!utilisateur){
-            res.status(401).send({ msg: "Token invalide" });
-        }
+        
+        if (!utilisateur) throw new Error();
+
+        req.authToken = authToken;
+        req.utilisateur = utilisateur;
         next();
     } catch (err) {
-        res.status(400).send({ msg: err });
+        res.status(401).send({ msg: "Token invalide, merci de vous authentifier!" });
     }
 
 }
